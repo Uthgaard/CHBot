@@ -7,7 +7,8 @@
 //  !chain add playername = adds playername to the next position in the chain     \\
 //  !chain remove playername = removes playername from the chain                  \\
 //     and brings the last person in the chain to their assignment to avoid gaps  \\
-//  !chain report = prints the chain assignment to discord                        \\
+//  !chain report = refreshes the chain assignment in discord                     \\
+//  The chain will automatically refresh itself in the channel as it is altered   \\
 /////////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 const { Client, GatewayIntentBits } = require('discord.js')
