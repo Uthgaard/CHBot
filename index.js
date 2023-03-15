@@ -14,7 +14,7 @@
 const { Client, GatewayIntentBits } = require('discord.js')
 const fs = require('fs')
 const readLastLines = require('read-last-lines')
-const content = fs.readFileSync('C:/P99/Logs/eqlog_Uthqaard_P1999Green.txt', 'utf8')
+const content = fs.readFileSync('C:/P99/Logs/eqlog_Juisebox_P1999Green.txt', 'utf8')
 var order = 0
 var tempcount = 0
 var tempString = ''
@@ -25,6 +25,11 @@ var index = 0
 var lastOne = 0
 var poppedCleric = ''
 var chainForDiscord = ''
+var instructions = '```How to Use:\n!chain start = Restarts the chain (will also respond to !chain restart)\n!chain add playername = Adds cleric to the end of the chain\n!chain remove playername = Removes cleric from the chain, brings last cleric forward to fill gap\n!chain report = refreshes this channel (useful if display bugs out for any reason)\n\nCurrent Issues Being Solved:\nBot might miss commands issued within 1 second of each other, due to processing time```\n'
+var lastMsgID = ''
+var commandsToProcess = []
+// Live Environment = '1084943396776464464'
+// Dev Environment = '1085218184921104466'
 
 require('dotenv/config')
 
@@ -38,18 +43,24 @@ const client = new Client({
 
 client.on('ready', async () => {
     console.log('The bot is ready')
-    // Live Environment
-    //client.channels.cache.get('1084943396776464464').bulkDelete(100)
-    // Dev Environment
-    await client.channels.cache.get('1084116656026034278').bulkDelete(5)
-    //client.channels.cache.get('1084116656026034278').send('test')
+    await client.channels.cache.get('1084943396776464464').bulkDelete(10)
+
+    //client.channels.cache.get('1085218184921104466').send('test')
     //console.log(process.cwd())
+    chainForDiscord = instructions + '---- Reporting Current Chain ----\n'
+    await client.channels.cache.get('1084943396776464464').send(chainForDiscord).then(sent => {
+        lastMsgID = sent.id
+        //console.log(lastMsgID)
+    })
 })
 
 
-fs.watch('C:/P99/Logs/eqlog_Uthqaard_P1999Green.txt', async (eventType, filename) => {
-    await readLastLines.read('C:/P99/Logs/eqlog_Uthqaard_P1999Green.txt', 1)
-     .then(async (lastLine) => {
+fs.watch('C:/P99/Logs/eqlog_Juisebox_P1999Green.txt', (eventType, filename) => {
+    readLastLines.read('C:/P99/Logs/eqlog_Juisebox_P1999Green.txt', 1)
+    .then(async (lastLine) => {
+        if(lastLine.includes('!chain')){
+            commandsToProcess.push(lastLine.trim())
+        }
         // Restarts the chain, clears all assignments
         if (lastLine.includes('!chain') && lastLine.includes('start')){
             console.log(lastLine.trim())
@@ -60,15 +71,15 @@ fs.watch('C:/P99/Logs/eqlog_Uthqaard_P1999Green.txt', async (eventType, filename
             chain = []
 
             chainForDiscord = ''
-            chainForDiscord = '---- Reporting Current Chain ----\n'
+            chainForDiscord = instructions + '---- Reporting Current Chain ----\n'
             chainForDiscord = chainForDiscord + ''
             // Clear the channel and Update the Chain
-            // Live Environment
-            //await client.channels.cache.get('1084943396776464464').bulkDelete(5)
-            //await client.channels.cache.get('1084943396776464464').send(chainForDiscord)
-            // Dev Environment
-            await client.channels.cache.get('1084116656026034278').bulkDelete(5)
-            await client.channels.cache.get('1084116656026034278').send(chainForDiscord)
+            
+            await client.channels.cache.get('1084943396776464464').bulkDelete(5)
+            await client.channels.cache.get('1084943396776464464').send(chainForDiscord).then(sent => {
+                lastMsgID = sent.id
+                //console.log(lastMsgID)
+            })
         }
         
         // Adds the cleric to the end of the chain if they are not already in it
@@ -96,13 +107,13 @@ fs.watch('C:/P99/Logs/eqlog_Uthqaard_P1999Green.txt', async (eventType, filename
                 }
 
                 console.log('Adding ' + chain[assignment] + ' to chain in position: ' + padding + order)
-                //client.channels.cache.get('1084116656026034278').send(chain[assignment] + ': ' + padding + order + ' ||')
+                //client.channels.cache.get('1085218184921104466').send(chain[assignment] + ': ' + padding + order + ' ||')
             }
 
             // Build the chain output for discord         
             index = 0
             chainForDiscord = ''
-            chainForDiscord = '---- Reporting Current Chain ----\n```'
+            chainForDiscord = instructions + '---- Reporting Current Chain ----\n```'
             chain.forEach((element) => {
                 console.log(element)
                 //console.log(chain.findIndex())
@@ -117,14 +128,14 @@ fs.watch('C:/P99/Logs/eqlog_Uthqaard_P1999Green.txt', async (eventType, filename
                 index = index + 1
             })
 
-            chainForDiscord = chainForDiscord + '```'
+            chainForDiscord = chainForDiscord + ' ```'
             // Clear the channel and Update the Chain
-            // Live Environment
-            //await client.channels.cache.get('1084943396776464464').bulkDelete(5)
-            //await client.channels.cache.get('1084943396776464464').send(chainForDiscord)
-            // Dev Environment
-            await client.channels.cache.get('1084116656026034278').bulkDelete(5)
-            await client.channels.cache.get('1084116656026034278').send(chainForDiscord)
+            
+            await client.channels.cache.get('1084943396776464464').messages.fetch(lastMsgID).then(message => message.delete())
+            await client.channels.cache.get('1084943396776464464').send(chainForDiscord).then(sent => {
+                lastMsgID = sent.id
+                //console.log(lastMsgID)
+            })
         }
 
         // Removes the cleric from chain (if found), and fills the gap
@@ -155,7 +166,7 @@ fs.watch('C:/P99/Logs/eqlog_Uthqaard_P1999Green.txt', async (eventType, filename
             // Build the chain output for discord         
             index = 0
             chainForDiscord = ''
-            chainForDiscord = '---- Reporting Current Chain ----\n```'
+            chainForDiscord = instructions + '---- Reporting Current Chain ----\n```'
             chain.forEach((element) => {
                 console.log(element)
                 //console.log(chain.findIndex())
@@ -170,14 +181,14 @@ fs.watch('C:/P99/Logs/eqlog_Uthqaard_P1999Green.txt', async (eventType, filename
                 index = index + 1
             })
 
-            chainForDiscord = chainForDiscord + '```'
+            chainForDiscord = chainForDiscord + ' ```'
             // Clear the channel and Update the Chain
-            // Live Environment
-            //await client.channels.cache.get('1084943396776464464').bulkDelete(5)
-            //await client.channels.cache.get('1084943396776464464').send(chainForDiscord)
-            // Dev Environment
-            await client.channels.cache.get('1084116656026034278').bulkDelete(5)
-            await client.channels.cache.get('1084116656026034278').send(chainForDiscord)
+            
+            await client.channels.cache.get('1084943396776464464').messages.fetch(lastMsgID).then(message => message.delete())
+            await client.channels.cache.get('1084943396776464464').send(chainForDiscord).then(sent => {
+                lastMsgID = sent.id
+                //console.log(lastMsgID)
+            })
         }
 
         // Reports the chain assignment to discord
@@ -186,7 +197,7 @@ fs.watch('C:/P99/Logs/eqlog_Uthqaard_P1999Green.txt', async (eventType, filename
             index = 0
 
             // Build the chain output for discord
-            chainForDiscord = '---- Reporting Current Chain ----\n```'
+            chainForDiscord = instructions + '---- Reporting Current Chain ----\n```'
             chain.forEach((element) => {
                 console.log(element)
                 //console.log(chain.findIndex())
@@ -201,16 +212,17 @@ fs.watch('C:/P99/Logs/eqlog_Uthqaard_P1999Green.txt', async (eventType, filename
                 index = index + 1
             })
 
-            chainForDiscord = chainForDiscord + '```'
+            chainForDiscord = chainForDiscord + ' ```'
             // Clear the channel and Update the Chain
-            // Live Environment
-            //await client.channels.cache.get('1084943396776464464').bulkDelete(5)
-            //await client.channels.cache.get('1084943396776464464').send(chainForDiscord)
-            // Dev Environment
-            await client.channels.cache.get('1084116656026034278').bulkDelete(5)
-            await client.channels.cache.get('1084116656026034278').send(chainForDiscord)
+            
+            await client.channels.cache.get('1084943396776464464').messages.fetch(lastMsgID).then(message => message.delete())
+            await client.channels.cache.get('1084943396776464464').send(chainForDiscord).then(sent => {
+                lastMsgID = sent.id
+                //console.log(lastMsgID)
+            }) 
         }
      })
+})
 
     //console.log(lines)
     //fs.readFile(content, 'utf-8', (err, data) => {
@@ -218,6 +230,16 @@ fs.watch('C:/P99/Logs/eqlog_Uthqaard_P1999Green.txt', async (eventType, filename
         //console.log(lines[lines.length - 1])
         //client.channels.cache.get('1029397799424512092').send(lines)
     //})
-})
+
+    // This deletes the whole channel
+    //await client.channels.cache.get('1085218184921104466').delete(lastMsgID)
+    // This deletes the specified message
+    //client.channels.cache.get('1085218184921104466').messages.fetch(lastMsgID).then(message => message.delete())
+/*
+do {
+        console.log('There is a command to process')
+        commandsToProcess.shift()
+} while (commandsToProcess.length)
+*/
 
 client.login(process.env.TOKEN)
